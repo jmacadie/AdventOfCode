@@ -24,7 +24,6 @@ class BingoBoard:
     def call(self, num):
         for row in range(0, 5):
             for col in range(0, 5):
-                #print('row: ', row, 'col: ', col, 'num: ', num, 'board: ', self.board[row][col], 'called: ', self.called[row][col])
                 if self.board[row][col] == num:
                     self.called[row][col] = 1
 
@@ -67,19 +66,39 @@ lines = []
 with p.open() as f:
     while line := f.readline():
         if len(line) > 3:
-            lines.append(line.replace('\n', ''))
+            lines.append(line.lstrip().replace('\n', ''))
         if len(lines) == 5:
             b = BingoBoard(lines[0], lines[1], lines[2], lines[3], lines [4])
             boards.append(b)
             lines = []
 
+#for m in moves:
+#    for b in boards:
+#        b.call(m)
+#        if b.isBingo():
+#            print(m)
+#            print(b.score())
+#            print(int(m) * b.score())
+#            break
+#        else:
+#            continue
+#        break
+#    else:
+#        continue
+#    break
+
 for m in moves:
-    for b in boards:
+    for b in list(boards):
         b.call(m)
         if b.isBingo():
-            print(m)
-            print(b.score())
-            print(int(m) * b.score())
+            if len(boards) == 1:
+                print(m)
+                print(b.score())
+                print(int(m) * b.score())
+                break
+            else:
+                boards.remove(b)
+                continue
             break
         else:
             continue
