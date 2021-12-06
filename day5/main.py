@@ -27,6 +27,23 @@ class map:
             else: 
                 for i in range(x2, x1 + 1):
                     self.map[i][y1] = self.map[i][y1] + 1
+        elif abs(x1 - x2) == abs(y1 - y2):
+            if (x1 < x2) and (y1 < y2):
+                for i in range(x1, x2 + 1):
+                    j = i - x1 + y1
+                    self.map[i][j] = self.map[i][j] + 1
+            elif (x1 > x2) and (y1 < y2):
+                for i in range(x2, x1 + 1):
+                    j = x2 - i + y2
+                    self.map[i][j] = self.map[i][j] + 1
+            elif (x1 < x2) and (y1 > y2):
+                for i in range(x1, x2 + 1):
+                    j = x1 - i + y1
+                    self.map[i][j] = self.map[i][j] + 1
+            elif (x1 > x2) and (y1 > y2):
+                for i in range(x2, x1 + 1):
+                    j = i - x2 + y2
+                    self.map[i][j] = self.map[i][j] + 1
 
     def countMultiple(self):
         sum = 0
