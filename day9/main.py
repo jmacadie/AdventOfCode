@@ -42,21 +42,17 @@ class HeightMap:
                 return True
         return False
 
-    def check_basin_point(self, i, j, curr_basin_points):
-        if self.map[j][i] < 9:
-            curr_basin_points.append([i, j])
-            if i > 0 and not self.already_included([i - 1, j], curr_basin_points):
-                curr_basin_points = self.check_basin_point(i - 1, j, curr_basin_points)
-            if j > 0 and not self.already_included([i, j - 1], curr_basin_points):
-                curr_basin_points = self.check_basin_point(i, j - 1, curr_basin_points)
-            if i < (self.width - 1) and not self.already_included([i + 1, j], curr_basin_points):
-                curr_basin_points = self.check_basin_point(i + 1, j, curr_basin_points)
-            if j < (self.height - 1) and not self.already_included([i, j + 1], curr_basin_points):
-                curr_basin_points = self.check_basin_point(i, j + 1, curr_basin_points)
+    def check_basin_point(self, point, curr_basin_points):
+        if self.get_point_val(point) < 9:
+            curr_basin_points.append(point)
+            for adj_point in self.get_adjacent_points(point):
+                if self.in_bounds(adj_point) and \
+                    not self.already_included(adj_point, curr_basin_points):
+                    curr_basin_points = self.check_basin_point(adj_point, curr_basin_points)
         return curr_basin_points
 
     def get_basin_size(self, i, j):
-        basin_points = self.check_basin_point(i, j, [])
+        basin_points = self.check_basin_point([i, j], [])
         return len(basin_points)
 
 M = []
