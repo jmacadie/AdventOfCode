@@ -24,16 +24,16 @@ class HeightMap:
         j = point[1]
         return [[i + 1, j], [i, j + 1], [i - 1, j], [i, j - 1]]
 
-    def is_low_point(self, i, j):
-        val = self.get_point_val([i, j])
-        for point in self.get_adjacent_points([i, j]):
-            if self.in_bounds(point) and self.get_point_val(point) <= val:
+    def is_low_point(self, point):
+        val = self.get_point_val(point)
+        for adj_point in self.get_adjacent_points(point):
+            if self.in_bounds(adj_point) and self.get_point_val(adj_point) <= val:
                 return False
         return True
 
-    def risk_level(self, i, j):
-        if self.is_low_point(i, j):
-            return self.map[j][i] + 1
+    def risk_level(self, point):
+        if self.is_low_point(point):
+            return self.get_point_val(point) + 1
         return 0
 
     def already_included(self, new_point, curr_basin_points):
@@ -51,8 +51,8 @@ class HeightMap:
                     curr_basin_points = self.check_basin_point(adj_point, curr_basin_points)
         return curr_basin_points
 
-    def get_basin_size(self, i, j):
-        basin_points = self.check_basin_point([i, j], [])
+    def get_basin_size(self, point):
+        basin_points = self.check_basin_point(point, [])
         return len(basin_points)
 
 M = []
@@ -63,9 +63,9 @@ OUT = 0
 S = []
 for x in range(HM.width):
     for y in range(HM.height):
-        if HM.is_low_point(x, y):
-            OUT += HM.risk_level(x, y)
-            size = HM.get_basin_size(x, y)
+        if HM.is_low_point([x, y]):
+            OUT += HM.risk_level([x, y])
+            size = HM.get_basin_size([x, y])
             S.append(size)
 S.sort()
 print(OUT)
