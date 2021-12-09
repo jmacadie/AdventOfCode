@@ -9,15 +9,26 @@ class HeightMap:
             assert len(row) == self.width
             self.map.append(row)
 
+    def get_point_val(self, point):
+        return self.map[point[1]][point[0]]
+
+    def in_bounds(self, point):
+        if point[0] < 0 or point[1] < 0:
+            return False
+        if point[0] >= self.width or point[1] >= self.height:
+            return False
+        return True
+
+    def get_adjacent_points(self, point):
+        i = point[0]
+        j = point[1]
+        return [[i + 1, j], [i, j + 1], [i - 1, j], [i, j - 1]]
+
     def is_low_point(self, i, j):
-        if j > 0 and self.map[j][i] >= self.map[j - 1][i]:
-            return False
-        if i > 0 and self.map[j][i] >= self.map[j][i - 1]:
-            return False
-        if j < (self.height - 1) and self.map[j][i] >= self.map[j + 1][i]:
-            return False
-        if i < (self.width - 1) and self.map[j][i] >= self.map[j][i + 1]:
-            return False
+        val = self.get_point_val([i, j])
+        for point in self.get_adjacent_points([i, j]):
+            if self.in_bounds(point) and self.get_point_val(point) <= val:
+                return False
         return True
 
     def risk_level(self, i, j):
