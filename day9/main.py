@@ -25,9 +25,6 @@ class HeightMap:
             return self.map[j][i] + 1
         return 0
 
-    def get_dim(self):
-        return [self.width, self.height]
-
     def already_included(self, new_point, curr_basin_points):
         for point in curr_basin_points:
             if point[0] == new_point[0] and point[1] == new_point[1]:
@@ -55,16 +52,15 @@ M = []
 for line in open('input.txt'):
     M.append(line.replace('\n', '').strip())
 HM = HeightMap(M)
-DIM = HM.get_dim()
 OUT = 0
 S = []
-for x in range(DIM[0]):
-    for y in range(DIM[1]):
+for x in range(HM.width):
+    for y in range(HM.height):
         if HM.is_low_point(x, y):
+            OUT += HM.risk_level(x, y)
             size = HM.get_basin_size(x, y)
             S.append(size)
-        OUT += HM.risk_level(x, y)
-print(OUT)
 S.sort()
+print(OUT)
 print(S[-1] * S[-2] * S[-3])
 
