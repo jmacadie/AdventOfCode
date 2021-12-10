@@ -22,12 +22,16 @@ class HeightMap:
     def get_adjacent_points(self, point):
         i = point[0]
         j = point[1]
-        return [[i + 1, j], [i, j + 1], [i - 1, j], [i, j - 1]]
+        points = []
+        for p in [[i + 1, j], [i, j + 1], [i - 1, j], [i, j - 1]]:
+            if self.in_bounds(p):
+                points.append(p)
+        return points
 
     def is_low_point(self, point):
         val = self.get_point_val(point)
         for adj_point in self.get_adjacent_points(point):
-            if self.in_bounds(adj_point) and self.get_point_val(adj_point) <= val:
+            if self.get_point_val(adj_point) <= val:
                 return False
         return True
 
@@ -46,8 +50,7 @@ class HeightMap:
         if self.get_point_val(point) < 9:
             curr_basin_points.append(point)
             for adj_point in self.get_adjacent_points(point):
-                if self.in_bounds(adj_point) and \
-                    not self.already_included(adj_point, curr_basin_points):
+                if not self.already_included(adj_point, curr_basin_points):
                     curr_basin_points = self.check_basin_point(adj_point, curr_basin_points)
         return curr_basin_points
 
