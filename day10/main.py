@@ -18,7 +18,7 @@ class ParenLine:
         '>': 4}
 
     def parens_match(self, start, end):
-        return ((start, end) in self.MATCHED)
+        return (start, end) in self.MATCHED
 
     def get_matching_paren(self, paren):
         matched = self.MATCHED.copy()
@@ -46,10 +46,7 @@ class ParenLine:
         for char in list(line_input):
             if not self.process_char(char):
                 return
-        if not self.stack:
-            self.state = 'complete'
-        else:
-            self.state = 'incomplete'
+        self.state = 'incomplete' if self.stack else 'complete'
 
     def syntax_error_score(self):
         if self.state == 'corrupted':
@@ -59,8 +56,7 @@ class ParenLine:
     def get_autocomplete_string(self):
         openings = self.stack.copy()
         out = ''
-        while openings:
-            char = openings.pop()
+        for char in reversed(openings):
             out += self.get_matching_paren(char)
         return out
 
