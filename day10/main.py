@@ -18,18 +18,14 @@ class ParenLine:
         '>': 4}
 
     def parens_match(self, start, end):
-        matched = self.MATCHED.copy()
-        for pair in matched:
-            if pair[0] == start and pair[1] == end:
-                return True
-        return False
+        return ((start, end) in self.MATCHED)
 
     def get_matching_paren(self, paren):
         matched = self.MATCHED.copy()
         for pair in matched:
             if paren == pair[0]:
                 return pair[1]
-            elif paren == pair[1]:
+            if paren == pair[1]:
                 return pair[0]
         return False
 
