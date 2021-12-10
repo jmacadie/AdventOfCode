@@ -1,8 +1,11 @@
 class ParenLine:
 
-    OPENING = ['(', '[', '{', '<']
-    CLOSING = [')', ']', '}', '>']
-    MATCHED = list(zip(OPENING, CLOSING))
+    MATCHED = [
+        ('(', ')'),
+        ('[', ']'),
+        ('{', '}'),
+        ('<', '>')]
+    OPENING, CLOSING = list(zip(*MATCHED))
     SYNTAX_POINTS = {
         ')': 3,
         ']': 57,
@@ -30,18 +33,23 @@ class ParenLine:
                 return pair[0]
         return False
 
+    def process_char(self, char):
+        if char in self.OPENING:
+            self.stack.append(char)
+        elif char in self.CLOSING:
+            open_char = self.stack.pop()
+            if not self.parens_match(open_char, char):
+                self.bad_char = char
+                self.state = 'corrupted'
+                return False
+        return True
+
     def __init__(self, line_input):
         self.stack = []
         self.bad_char = ''
         for char in list(line_input):
-            if char in self.OPENING:
-                self.stack.append(char)
-            elif char in self.CLOSING:
-                open_char = self.stack.pop()
-                if not self.parens_match(open_char, char):
-                    self.bad_char = char
-                    self.state = 'corrupted'
-                    return
+            if not self.process_char(char):
+                return
         if not self.stack:
             self.state = 'complete'
         else:
@@ -78,7 +86,7 @@ for line in open('input.txt'):
     if PL.state == 'incomplete':
         S.append(PL.autocomplete_score())
 S.sort()
-MID= int((len(S)-1)/2)
+MID = int((len(S)-1)/2)
 assert SUM == 168417
 assert S[MID] == 2802519786
 print(SUM)
