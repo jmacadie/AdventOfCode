@@ -1,4 +1,5 @@
 from collections import Counter
+import string
 
 class ScrambledNumbers:
 
@@ -15,55 +16,62 @@ class ScrambledNumbers:
         'abcdfg': 9
         }
 
-    def find_unscrambled_letter(self, count, letter, four):
+    def find_unscrambled_letter(self, count, letter):
         if count == 4:
             return 'e'
-        elif count == 6:
+        if count == 6:
             return 'b'
-        elif count == 7:
-            if letter in four:
+        if count == 7:
+            if letter in self.four:
                 return 'd'
             return 'g'
-        elif count == 8:
-            if letter in four:
+        if count == 8:
+            if letter in self.four:
                 return 'c'
             return 'a'
-        elif count == 9:
+        if count == 9:
             return 'f'
 
     def __init__(self, nums):
         arr = nums.split(' ')
         for scrambled_num in arr:
             if len(scrambled_num) == 4:
-                four = scrambled_num
+                self.four = scrambled_num
                 break
         c_nums = Counter(nums)
         self.map = {}
-        self.map['a'] = self.find_unscrambled_letter(c_nums['a'], 'a', four)
-        self.map['b'] = self.find_unscrambled_letter(c_nums['b'], 'b', four)
-        self.map['c'] = self.find_unscrambled_letter(c_nums['c'], 'c', four)
-        self.map['d'] = self.find_unscrambled_letter(c_nums['d'], 'd', four)
-        self.map['e'] = self.find_unscrambled_letter(c_nums['e'], 'e', four)
-        self.map['f'] = self.find_unscrambled_letter(c_nums['f'], 'f', four)
-        self.map['g'] = self.find_unscrambled_letter(c_nums['g'], 'g', four)
+        for char in list(string.ascii_lowercase[0:7]):
+            self.map[char] = self.find_unscrambled_letter(c_nums[char], char)
 
-    def decode(self, number):
+    def decode_one(self, number):
         decoded_num = ''
         for char in number:
             decoded_num += self.map[char]
         decoded_num = ''.join(sorted(decoded_num))
         return self.UNSCRAMBLED_MAP[decoded_num]
 
-out = 0
+    def count_easy(self, nums):
+        out = 0
+        for num in nums:
+            if self.decode_one(num) in [1, 4, 7, 8]:
+                out += 1
+        return out
+
+    def decode(self, nums):
+        temp = 0
+        for num in nums:
+            temp = temp * 10 + self.decode_one(num)
+        return temp
+
+
+OUT1 = 0
+OUT2 = 0
 for line in open('input.txt'):
-    ls = line.split('|')
-    s = ScrambledNumbers(ls[0].strip())
-    testNums = ls[1].strip().split(' ')
-    temp = 0
-    for num in testNums:
-        #if s.decode(num) in [1, 4, 7, 8]:
-        #    out += 1
-        temp = temp * 10 + s.decode(num)
-    out += temp
-print(out)
+    source, test = line.split('|')
+    s = ScrambledNumbers(source.strip())
+    test = test.strip().split(' ')
+    OUT1 += s.count_easy(test)
+    OUT2 += s.decode(test)
+print(OUT1)
+print(OUT2)
 
