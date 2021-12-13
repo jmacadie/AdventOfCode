@@ -13,20 +13,26 @@ class Origami:
         for y in range(self.max_y):
             self.map[y] = self.map[y][:self.max_x]
 
+    def fold_x(self, at):
+        lower = max(2 * at - self.max_x + 1, 0)
+        for x in range(lower, at):
+            for y in range(self.max_y):
+                self.map[y][x] = min(self.map[y][x] + self.map[y][2 * at - x], 1)
+
+    def fold_y(self, at):
+        lower = max(2 * at - self.max_y + 1, 0)
+        for x in range(self.max_x):
+            for y in range(lower, at):
+                self.map[y][x] = min(self.map[y][x] + self.map[2 * at - y][x], 1)
+
     def do_fold(self, fold):
         dim, at = fold.split('=')
         at = int(at)
-        for x in range(self.max_x):
-            for y in range(self.max_y):
-                if dim == 'x':
-                    if x < at and (2 * at - x) < self.max_x:
-                        self.map[y][x] = min(self.map[y][x] + self.map[y][2 * at - x], 1)
-                if dim == 'y':
-                    if y < at and (2 * at - y) < self.max_y:
-                        self.map[y][x] = min(self.map[y][x] + self.map[2 * at - y][x], 1)
         if dim == 'x':
+            self.fold_x(at)
             self.max_x = at
         elif dim == 'y':
+            self.fold_y(at)
             self.max_y = at
         self.trim_map()
 
