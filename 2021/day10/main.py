@@ -72,7 +72,7 @@ class ParenLine:
 
 SUM = 0
 S = []
-for line in open('input.txt'):
+for line in open('input.txt', encoding='UTF-8'):
     PL = ParenLine(line.replace('/n', '').strip())
     SUM += PL.syntax_error_score()
     if PL.state == 'incomplete':
@@ -83,4 +83,3 @@ assert SUM == 168417
 assert S[MID] == 2802519786
 print(SUM)
 print(S[MID])
-
