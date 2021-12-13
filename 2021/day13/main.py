@@ -1,6 +1,5 @@
 from typing import List
 
-
 class Origami:
 
     MAX = 2000
