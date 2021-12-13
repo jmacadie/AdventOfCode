@@ -1,3 +1,5 @@
+from collections import Counter
+
 class Graph:
 
     def add_one_path(self, v_1, v_2):
@@ -14,11 +16,24 @@ class Graph:
     def is_small(self, vertex):
         return vertex == vertex.lower()
 
+    def is_small_bad(self, vertex, route):
+        if self.part == 1:
+            return vertex in route
+        if self.part == 2:
+            if vertex == 'start':
+                return True
+            caves = Counter(route)
+            for k, v in caves.items():
+                if self.is_small(k):
+                    if v > 1:
+                        return vertex in route
+            return False
+
     def find_routes(self, curr_route):
         verticies = self.path_map[curr_route[-1]].copy()
         for vertex in verticies:
             if self.is_small(vertex) and \
-                vertex in curr_route:
+                self.is_small_bad(vertex, curr_route):
                 continue
             route = curr_route.copy()
             route.append(vertex)
@@ -28,6 +43,7 @@ class Graph:
             self.find_routes(route)
 
     def __init__(self, paths) -> None:
+        self.part = 2
         self.path_map = {}
         self.routes = []
         for path in paths:
@@ -44,5 +60,6 @@ M = []
 for line in open('input.txt', encoding='UTF-8'):
     M.append(line.replace('/n', '').strip())
 G = Graph(M)
-assert len(G.routes) == 5333
+#assert len(G.routes) == 5333
+assert len(G.routes) == 146553
 print(len(G.routes))
