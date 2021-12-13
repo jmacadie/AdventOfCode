@@ -42,8 +42,8 @@ class Graph:
                 continue
             self.find_routes(route)
 
-    def __init__(self, paths) -> None:
-        self.part = 2
+    def __init__(self, paths, part) -> None:
+        self.part = part
         self.path_map = {}
         self.routes = []
         for path in paths:
@@ -59,7 +59,11 @@ class Graph:
 M = []
 for line in open('input.txt', encoding='UTF-8'):
     M.append(line.replace('/n', '').strip())
-G = Graph(M)
-#assert len(G.routes) == 5333
+
+G = Graph(M, 1)
+assert len(G.routes) == 5333
+print(len(G.routes))
+
+G = Graph(M, 2)
 assert len(G.routes) == 146553
 print(len(G.routes))
