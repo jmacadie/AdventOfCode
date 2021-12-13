@@ -43,18 +43,40 @@ class Origami:
                 sum_dots += self.map[y][x]
         return sum_dots
 
-    def __init__(self, points, folds):
-        self.map = [[0 for _ in range(self.MAX)] for _ in range(self.MAX)]
-        self.max_x = 0
-        self.max_y = 0
-        self.fold1_dots = 0
+    def add_points(self, points):
         for point in points:
             self.add_point(point)
         self.trim_map()
+
+    def do_folds(self, folds):
         for fold in folds:
             self.do_fold(fold)
             if self.fold1_dots == 0:
                 self.fold1_dots = self.count_dots()
+
+    def read_file(self, file_path):
+        points = []
+        folds = []
+        points_section = True
+        with open(file_path, encoding='UTF-8') as file:
+            while line := file.readline():
+                if line == '\n':
+                    points_section = False
+                elif points_section:
+                    points.append(line.replace('\n', '').strip())
+                else:
+                    line = line.replace('\n', '').strip()
+                    _, line = line.split('along ')
+                    folds.append(line)
+        self.add_points(points)
+        self.do_folds(folds)
+
+    def __init__(self, file):
+        self.map = [[0 for _ in range(self.MAX)] for _ in range(self.MAX)]
+        self.max_x = 0
+        self.max_y = 0
+        self.fold1_dots = 0
+        self.read_file(file)
 
     def print_out(self):
         for y in range(self.max_y):
@@ -66,19 +88,10 @@ class Origami:
                     line_out += '#'
             print(line_out)
 
-P = []
-F = []
-P_SEC = True
-for line in open('input.txt', encoding='UTF-8'):
-    if line == '\n':
-        P_SEC = False
-    elif P_SEC:
-        P.append(line.replace('\n', '').strip())
-    else:
-        line = line.replace('\n', '').strip()
-        _, line = line.split('along ')
-        F.append(line)
-O = Origami(P, F)
+O = Origami('test.txt')
+assert O.fold1_dots == 17
+
+O = Origami('input.txt')
 assert O.fold1_dots == 655
 print(O.fold1_dots)
 O.print_out()
