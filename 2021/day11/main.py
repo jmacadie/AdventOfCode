@@ -4,7 +4,7 @@ class OctoGrid:
         self.height = len(lines)
         self.width = len(list(lines[0]))
         self.map = []
-        self.tot_falshes = 0
+        self.tot_flashes = 0
         self.flashed = [[False for _ in range(self.width)] for _ in range(self.height)]
         self.step_flashes = 0
         for row in lines:
@@ -65,7 +65,7 @@ class OctoGrid:
             for j in range(self.height):
                 self.increment_point_val([i, j])
 
-    def flash_all(self):
+    def test_flash_all(self):
         for i in range(self.width):
             for j in range(self.height):
                 if self.get_point_val([i, j]) > 9:
@@ -77,16 +77,16 @@ class OctoGrid:
                 if self.get_point_val([i, j]) > 9:
                     self.reset_point_val([i, j])
 
-    def add_day(self):
+    def add_step(self):
         self.flashed = [[False for _ in range(self.width)] for _ in range(self.height)]
         self.step_flashes = 0
         self.increment_all()
-        self.flash_all()
+        self.test_flash_all()
         self.reset_all()
-        self.tot_falshes += self.step_flashes
+        self.tot_flashes += self.step_flashes
 
     def all_flashed(self):
-        return True if self.step_flashes == 100 else False
+        return True if self.step_flashes == (self.width * self.height) else False
 
     def print_map(self):
         for row in range(self.height):
@@ -98,7 +98,11 @@ for line in open('input.txt', encoding='UTF-8'):
     M.append(line.replace('\n', '').strip())
 OG = OctoGrid(M)
 for x in range(10000):
-    OG.add_day()
+    OG.add_step()
+    if x == 99:
+        assert OG.tot_flashes == 1697
+        print(OG.tot_flashes)
     if OG.all_flashed():
         break
+assert x + 1 == 344
 print(x + 1)
