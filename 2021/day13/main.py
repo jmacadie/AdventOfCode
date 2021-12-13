@@ -13,27 +13,27 @@ class Origami:
         for y in range(self.max_y):
             self.map[y] = self.map[y][:self.max_x]
 
-    def fold_x(self, at):
-        lower = max(2 * at - self.max_x + 1, 0)
-        for x in range(lower, at):
+    def fold_x(self, fold_at):
+        lower = max(2 * fold_at - self.max_x + 1, 0)
+        for x in range(lower, fold_at):
             for y in range(self.max_y):
-                self.map[y][x] = min(self.map[y][x] + self.map[y][2 * at - x], 1)
+                self.map[y][x] = min(self.map[y][x] + self.map[y][2 * fold_at - x], 1)
 
-    def fold_y(self, at):
-        lower = max(2 * at - self.max_y + 1, 0)
+    def fold_y(self, fold_at):
+        lower = max(2 * fold_at - self.max_y + 1, 0)
         for x in range(self.max_x):
-            for y in range(lower, at):
-                self.map[y][x] = min(self.map[y][x] + self.map[2 * at - y][x], 1)
+            for y in range(lower, fold_at):
+                self.map[y][x] = min(self.map[y][x] + self.map[2 * fold_at - y][x], 1)
 
     def do_fold(self, fold):
-        dim, at = fold.split('=')
-        at = int(at)
+        dim, fold_at = fold.split('=')
+        fold_at = int(fold_at)
         if dim == 'x':
-            self.fold_x(at)
-            self.max_x = at
+            self.fold_x(fold_at)
+            self.max_x = fold_at
         elif dim == 'y':
-            self.fold_y(at)
-            self.max_y = at
+            self.fold_y(fold_at)
+            self.max_y = fold_at
         self.trim_map()
 
     def count_dots(self):
