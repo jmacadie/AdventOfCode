@@ -75,8 +75,6 @@ assert P.length() == 97
 for _ in range(5):
     P.add_step()
 assert P.length() == 3073
-#assert P.get_max_letter() == ('B', 1749)
-#assert P.get_min_letter() == ('H', 161)
 assert P.special() == 1588
 
 P = Polymer('input.txt')
