@@ -1,4 +1,3 @@
-from collections import Counter
 from typing import Tuple, Dict
 
 class Polymer:
@@ -6,8 +5,11 @@ class Polymer:
     def __init__(self, file_path: str) -> None:
         self.template = ''
         self.rules = {} # type: Dict[str, str]
+        self.pairs = {} # type: Dict[str, int]
+        self.letters = {} # type: Dict[str, int]
         self.read_file(file_path)
-    
+        self.template_to_dict()
+
     def read_file(self, file_path: str) -> None:
         template = True
         with open(file_path, encoding='UTF-8') as file:
@@ -15,59 +17,74 @@ class Polymer:
                 if line == '\n':
                     template = False
                 elif template:
-                    self.template  = line.replace('\n', ''). strip()
+                    self.template = line.replace('\n', ''). strip()
                 else:
                     line = line.replace('\n', '').strip()
                     pair, insertion = line.split(' -> ')
                     self.rules[pair] = insertion
 
-    def add_step(self) -> None:
-        tmp_str = ''
+    def template_to_dict(self) -> None:
         for i in range(len(self.template) - 1):
             pair = self.template[i:i+2]
-            insertion = self.rules[pair]
-            tmp_str += pair[:1] + insertion
-        tmp_str += self.template[-1:]
-        self.template = tmp_str
+            if pair not in list(self.pairs.keys()):
+                self.pairs[pair] = 1
+            else:
+                self.pairs[pair] = self.pairs[pair] + 1
 
-    def get_max_letter(self) -> Tuple[str, int]:
-        letters = Counter(self.template)
-        letter = max(letters, key=letters.get)
-        return (letter, letters[letter])
+    def add_step(self) -> None:
+        temp = self.pairs.copy()
+        for k, v in self.pairs.items():
+            temp[k] = temp[k] - v
+            for key in self.find_insertion(k):
+                if key not in list(temp.keys()):
+                    temp[key] = v
+                else:
+                    temp[key] = temp[key] + v
+        self.pairs = temp
+        self.calc_letter_freq()
 
-    def get_min_letter(self) -> Tuple[str, int]:
-        letters = Counter(self.template)
-        letter =  min(letters, key=letters.get)
-        return (letter, letters[letter])
-    
+    def calc_letter_freq(self) -> None:
+        self.letters.clear()
+        for k, v in self.pairs.items():
+            self.add_letter(k[0], v)
+        self.add_letter(self.template[-1], 1)
+
+    def add_letter(self, letter: str, count: int) -> None:
+        if letter not in self.letters:
+            self.letters[letter] = count
+        else:
+            self.letters[letter] = self.letters[letter] + count
+
+    def find_insertion(self, pair: str) -> Tuple[str, str]:
+        insert = self.rules[pair]
+        return (pair[:1] + insert, insert + pair[-1:])
+
+    def length(self) -> int:
+        sum_tmp = 0
+        for _, v in self.letters.items():
+            sum_tmp += v
+        return sum_tmp
+
     def special(self) -> int:
-        max = self.get_max_letter()
-        min = self.get_min_letter()
-        return max[1] - min[1]
+        return max(self.letters.values()) - min(self.letters.values())
 
 P = Polymer('test.txt')
-P.add_step() #1
-assert P.template == 'NCNBCHB' 
-P.add_step() #2
-assert P.template == 'NBCCNBBBCBHCB' 
-P.add_step() #3
-assert P.template == 'NBBBCNCCNBBNBNBBCHBHHBCHB' 
-P.add_step() #4
-assert P.template == 'NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB' 
-P.add_step() #5
-assert len(P.template) == 97
-P.add_step() #6
-P.add_step() #7
-P.add_step() #8
-P.add_step() #9
-P.add_step() #10
-assert len(P.template) == 3073
-assert P.get_max_letter() == ('B', 1749)
-assert P.get_min_letter() == ('H', 161)
+for _ in range(5):
+    P.add_step()
+assert P.length() == 97
+for _ in range(5):
+    P.add_step()
+assert P.length() == 3073
+#assert P.get_max_letter() == ('B', 1749)
+#assert P.get_min_letter() == ('H', 161)
 assert P.special() == 1588
 
 P = Polymer('input.txt')
-for i in range(10):
+for _ in range(10):
     P.add_step()
 assert P.special() == 3284
+print(P.special())
+for _ in range(30):
+    P.add_step()
+assert P.special() == 4302675529689
 print(P.special())
