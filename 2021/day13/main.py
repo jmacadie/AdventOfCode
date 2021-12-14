@@ -51,8 +51,8 @@ class Origami:
                 self.fold1_dots = self.count_dots()
 
     def do_fold(self, fold: str) -> None:
-        dim, fold_at = fold.split('=')
-        fold_at = int(fold_at)
+        dim, fold_at_str = fold.split('=')
+        fold_at = int(fold_at_str)
         if dim == 'x':
             self.fold_x(fold_at)
         elif dim == 'y':
