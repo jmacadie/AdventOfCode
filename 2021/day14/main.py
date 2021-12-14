@@ -26,7 +26,7 @@ class Polymer:
     def template_to_dict(self) -> None:
         for i in range(len(self.template) - 1):
             pair = self.template[i:i+2]
-            if pair not in list(self.pairs.keys()):
+            if pair not in self.pairs:
                 self.pairs[pair] = 1
             else:
                 self.pairs[pair] = self.pairs[pair] + 1
@@ -36,7 +36,7 @@ class Polymer:
         for k, v in self.pairs.items():
             temp[k] = temp[k] - v
             for key in self.find_insertion(k):
-                if key not in list(temp.keys()):
+                if key not in temp:
                     temp[key] = v
                 else:
                     temp[key] = temp[key] + v
