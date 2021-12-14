@@ -55,10 +55,7 @@ class Polymer:
         return (pair[0] + insert, insert + pair[1])
 
     def length(self) -> int:
-        sum_tmp = 0
-        for _, v in self.letters.items():
-            sum_tmp += v
-        return sum_tmp
+        return sum(self.letters.values())
 
     def special(self) -> int:
         return max(self.letters.values()) - min(self.letters.values())
