@@ -43,13 +43,28 @@ class Cavern:
                 return False
         return True
 
-    def __init__(self, file: str) -> None:
+    @classmethod
+    def increment_map(cls, cavern_map: List[List[int]]) -> List[List[int]]:
+        width = len(cavern_map[0])
+        height = len(cavern_map)
+        tmp = []
+        for y in range(height):
+            row  = []
+            for x in range(width):
+                val = cavern_map[y][x] + 1
+                val = 1 if val == 10 else val
+                row.append(val)
+            tmp.append(row)
+        return tmp
+
+    def __init__(self, file: str, tile_times: int=0) -> None:
         self.width = 0
         self.height = 0
         self.map = [] # type: List[List[int]]
         self.start = Point(0, 0)
         self.min_paths = {} # type: Dict[Point, List[Point]]
         self.read_file(file)
+        self.tile_map(tile_times)
         self.find_min_paths()
 
     def read_file(self, file_path: str) -> None:
@@ -62,6 +77,23 @@ class Cavern:
                 assert len(row) == self.width
                 self.height += 1
                 self.map.append(row)
+
+    def tile_map(self, times: int) -> None:
+        working_copy = self.map.copy()
+        inc_map = working_copy.copy()
+        for _ in range(times):
+            inc_map = self.increment_map(inc_map)
+            working_copy = working_copy + inc_map
+        inc_map = working_copy.copy()
+        for _ in range(times):
+            inc_map = self.increment_map(inc_map)
+            tmp = []
+            for row1, row2 in zip(working_copy, inc_map):
+                tmp.append(row1 + row2)
+            working_copy = tmp
+        self.map = working_copy
+        self.width *= (times + 1)
+        self.height *= (times + 1)
 
     def get_point_val(self, p: Point) -> int:
         return self.map[p.y][p.x]
@@ -123,9 +155,11 @@ start = time.time()
 
 C = Cavern('test.txt')
 assert C.get_min_path_val() == 40
+C = Cavern('test.txt', 4)
+assert C.get_min_path_val() == 315
 
-C = Cavern('input.txt')
-assert C.get_min_path_val() == 696
-print(C.get_min_path_val())
+#C = Cavern('input.txt')
+#assert C.get_min_path_val() == 696
+#print(C.get_min_path_val())
 
 print(f'--- {round(time.time() - start, 2)} seconds ---')
