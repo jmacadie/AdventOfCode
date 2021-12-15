@@ -4,6 +4,24 @@ class Point(NamedTuple):
     x: int
     y: int
 
+    def get_adjacent(self, diag: bool=False) -> List['Point']:
+        output = []
+        output.append(Point(self.x + 1, self.y))
+        output.append(Point(self.x - 1, self.y))
+        output.append(Point(self.x, self.y + 1))
+        output.append(Point(self.x, self.y - 1))
+        if diag:
+            output.append(Point(self.x + 1, self.y + 1))
+            output.append(Point(self.x - 1, self.y + 1))
+            output.append(Point(self.x + 1, self.y - 1))
+            output.append(Point(self.x - 1, self.y - 1))
+        return output
+
+    def __eq__(self, __o: object) -> bool:
+        if not isinstance(__o, Point):
+            return NotImplemented
+        return self.x == __o.x and self.y == __o.y
+
 class Cavern:
 
     @classmethod
@@ -56,11 +74,7 @@ class Cavern:
 
     def get_adjacent_points(self, p: Point) -> List[Point]:
         points = []
-        for new_point in [
-            Point(p.x + 1, p.y),
-            Point(p.x - 1, p.y),
-            Point(p.x, p.y + 1),
-            Point(p.x, p.y - 1)]:
+        for new_point in p.get_adjacent(False):
             if self.in_bounds(new_point) and new_point in self.min_paths:
                 points.append(new_point)
         return points
@@ -72,8 +86,8 @@ class Cavern:
         return sum_tmp
 
     def find_min_path_at(self, p: Point) -> List[Point]:
-        if p.x == 0 and p.y == 0:
-            return [Point(0, 0)]
+        if p == self.start:
+            return [self.start]
         min_path_val = 0
         for next_p in self.get_adjacent_points(p):
             path = self.min_paths[next_p].copy()
