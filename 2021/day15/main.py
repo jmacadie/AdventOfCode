@@ -55,14 +55,12 @@ class Cavern:
         return True
 
     def get_adjacent_points(self, p: Point) -> List[Point]:
-        x = p.x
-        y = p.y
         points = []
         for new_point in [
-            Point(x + 1, y),
-            Point(x - 1, y),
-            Point(x, y + 1),
-            Point(x, y - 1)]:
+            Point(p.x + 1, p.y),
+            Point(p.x - 1, p.y),
+            Point(p.x, p.y + 1),
+            Point(p.x, p.y - 1)]:
             if self.in_bounds(new_point) and new_point in self.min_paths:
                 points.append(new_point)
         return points
