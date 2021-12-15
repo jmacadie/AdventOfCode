@@ -1,3 +1,4 @@
+import time
 from typing import List, NamedTuple, Dict
 
 class Point(NamedTuple):
@@ -38,7 +39,7 @@ class Cavern:
         if len(path1) != len(path2):
             return False
         for a, b in zip(path1, path2):
-            if a.x != b.x or a.y != b.y:
+            if a != b:
                 return False
         return True
 
@@ -47,7 +48,7 @@ class Cavern:
         self.height = 0
         self.map = [] # type: List[List[int]]
         self.start = Point(0, 0)
-        self.min_paths = {self.start: [self.start]} # type: Dict[Point, List[Point]]
+        self.min_paths = {} # type: Dict[Point, List[Point]]
         self.read_file(file)
         self.find_min_paths()
 
@@ -74,7 +75,7 @@ class Cavern:
 
     def get_adjacent_points(self, p: Point) -> List[Point]:
         points = []
-        for new_point in p.get_adjacent(False):
+        for new_point in p.get_adjacent():
             if self.in_bounds(new_point) and new_point in self.min_paths:
                 points.append(new_point)
         return points
@@ -111,12 +112,14 @@ class Cavern:
             self.check_adjacent(p)
 
     def find_min_paths(self) -> None:
-        for depth in range(1, self.width):
+        for depth in range(self.width):
             self.find_min_paths_at(depth)
 
     def get_min_path_val(self) -> int:
         path = self.min_paths[Point(self.width - 1, self.height - 1)]
         return self.get_path_value(path)
+
+start = time.time()
 
 C = Cavern('test.txt')
 assert C.get_min_path_val() == 40
@@ -124,3 +127,5 @@ assert C.get_min_path_val() == 40
 C = Cavern('input.txt')
 assert C.get_min_path_val() == 696
 print(C.get_min_path_val())
+
+print(f'--- {round(time.time() - start, 2)} seconds ---')
