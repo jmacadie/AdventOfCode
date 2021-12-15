@@ -158,8 +158,11 @@ assert C.get_min_path_val() == 40
 C = Cavern('test.txt', 4)
 assert C.get_min_path_val() == 315
 
-#C = Cavern('input.txt')
-#assert C.get_min_path_val() == 696
-#print(C.get_min_path_val())
+C = Cavern('input.txt')
+assert C.get_min_path_val() == 696
+print(C.get_min_path_val())
+C = Cavern('input.txt', 4)
+assert C.get_min_path_val() == 2952
+print(C.get_min_path_val())
 
 print(f'--- {round(time.time() - start, 2)} seconds ---')
