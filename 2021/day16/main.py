@@ -1,4 +1,5 @@
 from typing import List
+from math import prod
 from functools import reduce
 
 class Packet:
@@ -87,22 +88,23 @@ class Packet:
         return int('0b'+bin_tmp, 2)
 
     def get_version_sum(self) -> int:
-        return reduce(lambda s, p: s + p.get_version_sum(), self.subpackets, self.version)
+        return sum(package.get_version_sum() for package in self.subpackets) + self.version
+        #return reduce(lambda s, p: s + p.get_version_sum(), self.subpackets, self.version)
 
     def process_packet(self) -> int:
         output = 0
         if self.type == 0:
             # sum
-            output = reduce(lambda s, p: s + p.process_packet(), self.subpackets, 0)
+            output = sum(packet.process_packet() for packet in self.subpackets)
         elif self.type == 1:
             # product
-            output = reduce(lambda s, p: s * p.process_packet(), self.subpackets, 1)
+            output = prod(packet.process_packet() for packet in self.subpackets)
         elif self.type == 2:
             # min
-            output = reduce(lambda s, p: min(s, p.process_packet()), self.subpackets, 100000)
+            output = min(packet.process_packet() for packet in self.subpackets)
         elif self.type == 3:
             # max
-            output = reduce(lambda s, p: max(s, p.process_packet()), self.subpackets, 0)
+            output = max(packet.process_packet() for packet in self.subpackets)
         elif self.type == 4:
             # literal value
             output = self.literal_value
@@ -186,36 +188,21 @@ assert P.subpackets[0].subpackets[0].subpackets[3].type == 4
 assert P.subpackets[0].subpackets[0].subpackets[4].type == 4
 assert P.get_version_sum() == 31
 
-P = Packet('C200B40A82')
-assert P.process_packet() == 3
-
-P = Packet('04005AC33890')
-assert P.process_packet() == 54
-
-P = Packet('880086C3E88112')
-assert P.process_packet() == 7
-
-P = Packet('CE00C43D881120')
-assert P.process_packet() == 9
-
-P = Packet('D8005AC2A8F0')
-assert P.process_packet() == 1
-
-P = Packet('F600BC2D8F')
-assert P.process_packet() == 0
-
-P = Packet('9C005AC2F8F0')
-assert P.process_packet() == 0
-
-P = Packet('9C0141080250320F1802104A08')
-assert P.process_packet() == 1
+assert Packet('C200B40A82').process_packet() == 3
+assert Packet('04005AC33890').process_packet() == 54
+assert Packet('880086C3E88112').process_packet() == 7
+assert Packet('CE00C43D881120').process_packet() == 9
+assert Packet('D8005AC2A8F0').process_packet() == 1
+assert Packet('F600BC2D8F').process_packet() == 0
+assert Packet('9C005AC2F8F0').process_packet() == 0
+assert Packet('9C0141080250320F1802104A08').process_packet() == 1
 
 #Real thing
 with open('input.txt', encoding='UTF-8') as file:
     line = file.readline()
-    line = line.replace('\n', '').strip()
-    P = Packet(line)
-    assert P.get_version_sum() == 984
-    print(P.get_version_sum())
-    assert P.process_packet() == 1015320896946
-    print(P.process_packet())
+line = line.replace('\n', '').strip()
+P = Packet(line)
+assert P.get_version_sum() == 984
+print(P.get_version_sum())
+assert P.process_packet() == 1015320896946
+print(P.process_packet())
