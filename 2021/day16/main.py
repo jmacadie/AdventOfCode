@@ -26,18 +26,18 @@ class Packet:
     def __init__(self, hex_str: str='', bin_str: str='') -> None:
         self.bin = bin_str if hex_str == '' else self.__conv_to_bin(hex_str)
         self.subpackets = [] # type: List['Packet']
-        self.version = self.__get_version()
-        self.type = self.__get_type()
+        self.version = int(self.bin[:3], 2)
+        self.type = int(self.bin[3:6], 2)
         if self.type == 4:
             self.literal_value = self.__get_literal_value()
         else:
-            self.lengthtype = self.__get_length_type()
+            self.lengthtype = int(self.bin[6], 2)
             if self.lengthtype == 0:
-                self.tot_length = self.__get_tot_length()
+                self.tot_length = int(self.bin[7:22], 2)
                 self.residual_bin = self.bin[22+self.tot_length:]
                 self.__process_subpackets_len(self.bin[22:22+self.tot_length])
             else:
-                self.subpacket_count = self.__get_subpacket_count()
+                self.subpacket_count = int(self.bin[7:18], 2)
                 self.__process_subpackets_count(self.bin[18:], self.subpacket_count)
 
     def __conv_to_bin(self, hex_str: str) -> str:
@@ -45,36 +45,16 @@ class Packet:
 
     def __process_subpackets_len(self, bin_str: str) -> None:
         while bin_str != '':
-            subpacket = Packet(bin_str = bin_str)
+            subpacket = Packet(bin_str=bin_str)
             self.subpackets.append(subpacket)
             bin_str = subpacket.residual_bin
 
     def __process_subpackets_count(self, bin_str: str, count: int) -> None:
         for _ in range(count):
-            subpacket = Packet(bin_str = bin_str)
+            subpacket = Packet(bin_str=bin_str)
             self.subpackets.append(subpacket)
             bin_str = subpacket.residual_bin
         self.residual_bin = bin_str
-
-    def __get_version(self) -> int:
-        part = self.bin[:3]
-        return int('0b'+part, 2)
-
-    def __get_type(self) -> int:
-        part = self.bin[3:6]
-        return int('0b'+part, 2)
-
-    def __get_length_type(self) -> int:
-        part = self.bin[6]
-        return int('0b'+part, 2)
-
-    def __get_tot_length(self) -> int:
-        part = self.bin[7:22]
-        return int('0b'+part, 2)
-
-    def __get_subpacket_count(self) -> int:
-        part = self.bin[7:18]
-        return int('0b'+part, 2)
 
     def __get_literal_value(self) -> int:
         pos = 6
@@ -89,7 +69,6 @@ class Packet:
 
     def get_version_sum(self) -> int:
         return sum(package.get_version_sum() for package in self.subpackets) + self.version
-        #return reduce(lambda s, p: s + p.get_version_sum(), self.subpackets, self.version)
 
     def process_packet(self) -> int:
         output = 0
