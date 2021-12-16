@@ -22,63 +22,60 @@ class Packet:
         'F': '1111'
     }
 
-    def __init__(self, hex_string: str='', bin_str: str='') -> None:
-        if hex_string != '':
-            self.bin = self.conv_to_bin(hex_string)
-        else:
-            self.bin = bin_str
+    def __init__(self, hex_str: str='', bin_str: str='') -> None:
+        self.bin = bin_str if hex_str == '' else self.__conv_to_bin(hex_str)
         self.subpackets = [] # type: List['Packet']
-        self.version = self.get_version()
-        self.type = self.get_type()
+        self.version = self.__get_version()
+        self.type = self.__get_type()
         if self.type == 4:
-            self.literal_value = self.get_literal_value()
+            self.literal_value = self.__get_literal_value()
         else:
-            self.lengthtype = self.get_lengthtype()
+            self.lengthtype = self.__get_length_type()
             if self.lengthtype == 0:
-                self.tot_length = self.get_totlength()
+                self.tot_length = self.__get_tot_length()
                 self.residual_bin = self.bin[22+self.tot_length:]
-                self.process_subpackets_len(self.bin[22:22+self.tot_length])
+                self.__process_subpackets_len(self.bin[22:22+self.tot_length])
             else:
-                self.subpacket_count = self.get_subpacket_count()
-                self.process_subpackets_count(self.bin[18:], self.subpacket_count)
+                self.subpacket_count = self.__get_subpacket_count()
+                self.__process_subpackets_count(self.bin[18:], self.subpacket_count)
 
-    def conv_to_bin(self, hex_string: str) -> str:
-        return reduce(lambda a, b: a + self.HEX2BIN[b], hex_string, '')
+    def __conv_to_bin(self, hex_str: str) -> str:
+        return reduce(lambda a, b: a + self.HEX2BIN[b], hex_str, '')
 
-    def process_subpackets_len(self, bin_str: str) -> None:
+    def __process_subpackets_len(self, bin_str: str) -> None:
         while bin_str != '':
             subpacket = Packet(bin_str = bin_str)
             self.subpackets.append(subpacket)
             bin_str = subpacket.residual_bin
 
-    def process_subpackets_count(self, bin_str: str, count: int) -> None:
+    def __process_subpackets_count(self, bin_str: str, count: int) -> None:
         for _ in range(count):
             subpacket = Packet(bin_str = bin_str)
             self.subpackets.append(subpacket)
             bin_str = subpacket.residual_bin
         self.residual_bin = bin_str
 
-    def get_version(self) -> int:
+    def __get_version(self) -> int:
         part = self.bin[:3]
         return int('0b'+part, 2)
 
-    def get_type(self) -> int:
+    def __get_type(self) -> int:
         part = self.bin[3:6]
         return int('0b'+part, 2)
 
-    def get_lengthtype(self) -> int:
+    def __get_length_type(self) -> int:
         part = self.bin[6]
         return int('0b'+part, 2)
 
-    def get_totlength(self) -> int:
+    def __get_tot_length(self) -> int:
         part = self.bin[7:22]
         return int('0b'+part, 2)
 
-    def get_subpacket_count(self) -> int:
+    def __get_subpacket_count(self) -> int:
         part = self.bin[7:18]
         return int('0b'+part, 2)
 
-    def get_literal_value(self) -> int:
+    def __get_literal_value(self) -> int:
         pos = 6
         bit = '1'
         bin_tmp = ''
@@ -93,30 +90,35 @@ class Packet:
         return reduce(lambda s, p: s + p.get_version_sum(), self.subpackets, self.version)
 
     def process_packet(self) -> int:
+        output = 0
         if self.type == 0:
             # sum
-            return reduce(lambda s, p: s + p.process_packet(), self.subpackets, 0)
-        if self.type == 1:
+            output = reduce(lambda s, p: s + p.process_packet(), self.subpackets, 0)
+        elif self.type == 1:
             # product
-            return reduce(lambda s, p: s * p.process_packet(), self.subpackets, 1)
-        if self.type == 2:
+            output = reduce(lambda s, p: s * p.process_packet(), self.subpackets, 1)
+        elif self.type == 2:
             # min
-            return reduce(lambda s, p: min(s, p.process_packet()), self.subpackets, 100000)
-        if self.type == 3:
+            output = reduce(lambda s, p: min(s, p.process_packet()), self.subpackets, 100000)
+        elif self.type == 3:
             # max
-            return reduce(lambda s, p: max(s, p.process_packet()), self.subpackets, 0)
-        if self.type == 4:
-            return self.literal_value
+            output = reduce(lambda s, p: max(s, p.process_packet()), self.subpackets, 0)
+        elif self.type == 4:
+            # literal value
+            output = self.literal_value
+        else:
+            packet1 = self.subpackets[0].process_packet()
+            packet2 = self.subpackets[1].process_packet()
         if self.type == 5:
             # greter than
-            return 1 if self.subpackets[0].process_packet() > self.subpackets[1].process_packet() else 0
-        if self.type == 6:
+            output = 1 if packet1 > packet2 else 0
+        elif self.type == 6:
             # less than
-            return 1 if self.subpackets[0].process_packet() < self.subpackets[1].process_packet() else 0
-        if self.type == 7:
+            output = 1 if packet1 < packet2 else 0
+        elif self.type == 7:
             # equals
-            return 1 if self.subpackets[0].process_packet() == self.subpackets[1].process_packet() else 0
-        return 0
+            output = 1 if packet1 == packet2 else 0
+        return output
 
 #Test Cases
 P = Packet('D2FE28')
@@ -213,5 +215,7 @@ with open('input.txt', encoding='UTF-8') as file:
     line = file.readline()
     line = line.replace('\n', '').strip()
     P = Packet(line)
+    assert P.get_version_sum() == 984
     print(P.get_version_sum())
+    assert P.process_packet() == 1015320896946
     print(P.process_packet())
