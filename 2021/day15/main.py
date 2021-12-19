@@ -1,5 +1,5 @@
 import time
-from typing import List, NamedTuple, Dict
+from typing import List, NamedTuple
 
 class Point(NamedTuple):
     x: int
@@ -25,23 +25,16 @@ class Point(NamedTuple):
 
 class Cavern:
 
+    BIG = 1000000000
+
     @classmethod
     def get_depth_points(cls, depth: int) -> List[Point]:
         points = []
-        for x in range(depth + 1):
+        for x in range(depth):
             points.append(Point(x, depth))
-        for y in range(depth):
+        for y in range(depth + 1):
             points.append(Point(depth, y))
         return points
-
-    @classmethod
-    def same_path(cls, path1: List[Point], path2: List[Point]) -> bool:
-        if len(path1) != len(path2):
-            return False
-        for a, b in zip(path1, path2):
-            if a != b:
-                return False
-        return True
 
     @classmethod
     def increment_map(cls, cavern_map: List[List[int]]) -> List[List[int]]:
@@ -62,10 +55,11 @@ class Cavern:
         self.height = 0
         self.map = [] # type: List[List[int]]
         self.start = Point(0, 0)
-        self.min_paths = {} # type: Dict[Point, List[Point]]
         self.read_file(file)
         self.tile_map(tile_times)
-        self.find_min_paths()
+        self.min_cost_map = [] # type: List[List[int]]
+        self.init_min_cost_map()
+        self.calc_costs()
 
     def read_file(self, file_path: str) -> None:
         with open(file_path, encoding='UTF-8') as file:
@@ -95,8 +89,17 @@ class Cavern:
         self.width *= (times + 1)
         self.height *= (times + 1)
 
+    def init_min_cost_map(self) -> None:
+        self.min_cost_map = [[self.BIG for _ in range(self.width)] for _ in range(self.height)]
+
     def get_point_val(self, p: Point) -> int:
         return self.map[p.y][p.x]
+
+    def get_point_min_cost(self, p: Point) -> int:
+        return self.min_cost_map[p.y][p.x]
+
+    def set_point_min_cost(self, p: Point, val: int) -> None:
+        self.min_cost_map[p.y][p.x] = val
 
     def in_bounds(self, p: Point) -> bool:
         if p.x < 0 or p.y < 0:
@@ -108,48 +111,33 @@ class Cavern:
     def get_adjacent_points(self, p: Point) -> List[Point]:
         points = []
         for new_point in p.get_adjacent():
-            if self.in_bounds(new_point) and new_point in self.min_paths:
+            if self.in_bounds(new_point):
                 points.append(new_point)
         return points
 
-    def get_path_value(self, path: List[Point]) -> int:
-        sum_tmp = 0
-        for i in range(1, len(path)):
-            sum_tmp += self.get_point_val(path[i])
-        return sum_tmp
+    def calc_costs(self) -> None:
+        for lim in range(self.width):
+            for p in self.get_depth_points(lim):
+                if lim == 0:
+                    val = 0
+                elif p.x == lim:
+                    val = self.get_point_min_cost(Point(p.x - 1, p.y)) + self.get_point_val(p)
+                else:
+                    val = self.get_point_min_cost(Point(p.x, p.y - 1)) + self.get_point_val(p)
+                self.update_cost(p, val)
 
-    def find_min_path_at(self, p: Point) -> List[Point]:
-        if p == self.start:
-            return [self.start]
-        min_path_val = 0
-        for next_p in self.get_adjacent_points(p):
-            path = self.min_paths[next_p].copy()
-            path.append(p)
-            val = self.get_path_value(path)
-            if min_path_val == 0 or val < min_path_val:
-                min_path_val = val
-                min_path = path
-        return min_path
-
-    def check_adjacent(self, p: Point) -> None:
-        for next_p in self.get_adjacent_points(p):
-            new_min = self.find_min_path_at(next_p)
-            if not self.same_path(new_min, self.min_paths[next_p]):
-                self.min_paths[next_p] = new_min
-                self.check_adjacent(next_p)
-
-    def find_min_paths_at(self, depth: int) -> None:
-        for p in self.get_depth_points(depth):
-            self.min_paths[p] = self.find_min_path_at(p)
-            self.check_adjacent(p)
-
-    def find_min_paths(self) -> None:
-        for depth in range(self.width):
-            self.find_min_paths_at(depth)
+    def update_cost(self, p: Point, val: int) -> None:
+        for new_point in self.get_adjacent_points(p):
+            val = min(val, self.get_point_min_cost(new_point) + self.get_point_val(p))
+        self.set_point_min_cost(p, val)
+        for new_point in self.get_adjacent_points(p):
+            if self.get_point_min_cost(new_point) < self.BIG:
+                new_val = val + self.get_point_val(new_point)
+                if self.get_point_min_cost(new_point) > new_val:
+                    self.update_cost(new_point, new_val)
 
     def get_min_path_val(self) -> int:
-        path = self.min_paths[Point(self.width - 1, self.height - 1)]
-        return self.get_path_value(path)
+        return self.get_point_min_cost(Point(self.width - 1, self.height - 1))
 
 start = time.time()
 
