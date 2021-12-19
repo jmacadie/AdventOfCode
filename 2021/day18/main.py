@@ -274,5 +274,5 @@ for i in range(len(L)):
         if i != j:
             SN = L[i] + L[j]
             max_mag = max(max_mag, SN.magnitude())
-#assert max_mag == 3993
+assert max_mag == 4690
 print(max_mag)
