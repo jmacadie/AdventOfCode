@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 import math
 
 class Snailfish:
@@ -57,9 +57,6 @@ class Snailfish:
             right_num = int(self.string[right_start:right_end+1])
             right_num += int(self.string[mid+1:end].strip())
             new += self.string[end+1:right_start] + str(right_num) + self.string[right_end+1:]
-            #s = self.string[right_end+1:]
-            #new += self.string[right_end+1:]
-            #new += self.string[end+1:right_start] + str(right_num) + self.string[right_end+1:]
         else:
             new += self.string[end+1:]
         self.string = new
@@ -101,8 +98,7 @@ class Snailfish:
                     self.big_index_start = num_start
                     self.big_index_end = num_end
                     return True
-                else:
-                    num_start, num_end = 0, 0
+                num_start, num_end = 0, 0
             index += 1
         return False
 
@@ -121,6 +117,35 @@ class Snailfish:
         if self.too_big():
             self.split()
             self.reduce()
+
+    def magnitude_one(self, start, end, search) -> str:
+        is_first = True
+        part1, part2 = '', ''
+        for char in search[start+1:end]:
+            if char == ',':
+                is_first = False
+            elif is_first:
+                part1 += char
+            else:
+                part2 += char
+        part1_i = int(part1.strip())
+        part2_i = int(part2.strip())
+        num = (3 * part1_i) + (2 * part2_i)
+        return search[:start] + str(num) + search[end+1:]
+
+    def magnitude(self) -> int:
+        temp = self.string
+        index = 0
+        while index == 0:
+            for char in temp:
+                if char == '[':
+                    start = index
+                elif char == ']':
+                    temp = self.magnitude_one(start, index, temp)
+                    index = 0
+                    break
+                index += 1
+        return int(temp)
 
 SN = Snailfish('[[[[[9,8],1],2],3],4]')
 if SN.too_nested():
@@ -188,3 +213,66 @@ SN9 = Snailfish('[[[5,[7,4]],7],1]')
 SN10 = Snailfish('[[[[4,2],2],6],[8,7]]')
 SN = SN1 + SN2 + SN3 + SN4 + SN5 + SN6 + SN7 + SN8 + SN9 + SN10
 assert SN.string == '[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]'
+
+SN = Snailfish('[[9,1],[1,9]]')
+assert SN.magnitude() == 129
+
+SN = Snailfish('[[1,2],[[3,4],5]]')
+assert SN.magnitude() == 143
+
+SN = Snailfish('[[[[0,7],4],[[7,8],[6,0]]],[8,1]]')
+assert SN.magnitude() == 1384
+
+SN = Snailfish('[[[[1,1],[2,2]],[3,3]],[4,4]]')
+assert SN.magnitude() == 445
+
+SN = Snailfish('[[[[3,0],[5,3]],[4,4]],[5,5]]')
+assert SN.magnitude() == 791
+
+SN = Snailfish('[[[[5,0],[7,4]],[5,5]],[6,6]]')
+assert SN.magnitude() == 1137
+
+SN = Snailfish('[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]')
+assert SN.magnitude() == 3488
+
+L = [] # type: List[Snailfish]
+with open('test.txt', encoding='UTF-8') as file:
+    line = file.readline()
+    line = line.replace('\n', '').strip()
+    SN = Snailfish(line)
+    L.append(SN)
+    while line := file.readline():
+        line = line.replace('\n', '').strip()
+        SN2 = Snailfish(line)
+        L.append(SN2)
+        SN = SN + SN2
+assert SN.magnitude() == 4140
+max_mag = 0
+for i in range(len(L)):
+    for j in range(len(L)):
+        if i != j:
+            SN = L[i] + L[j]
+            max_mag = max(max_mag, SN.magnitude())
+assert max_mag == 3993
+
+L = [] # type: List[Snailfish]
+with open('input.txt', encoding='UTF-8') as file:
+    line = file.readline()
+    line = line.replace('\n', '').strip()
+    SN = Snailfish(line)
+    L.append(SN)
+    while line := file.readline():
+        line = line.replace('\n', '').strip()
+        SN2 = Snailfish(line)
+        L.append(SN2)
+        SN = SN + SN2
+assert SN.magnitude() == 2907
+print(SN.magnitude())
+max_mag = 0
+for i in range(len(L)):
+    for j in range(len(L)):
+        if i != j:
+            SN = L[i] + L[j]
+            max_mag = max(max_mag, SN.magnitude())
+#assert max_mag == 3993
+print(max_mag)
