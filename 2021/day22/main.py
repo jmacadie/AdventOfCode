@@ -135,5 +135,5 @@ RF = RebootFactory('test2.txt')
 assert RF.reactor.get_on_count() == 590784
 
 RF = RebootFactory('input.txt')
-#assert RF.reactor.get_on_count() == 590784
+assert RF.reactor.get_on_count() == 607573
 print(RF.reactor.get_on_count())
