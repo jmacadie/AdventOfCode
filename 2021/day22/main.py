@@ -117,3 +117,10 @@ assert R.get_on_count() == 590784
 R = Reactor('input.txt', 50)
 assert R.get_on_count() == 607573
 print(R.get_on_count())
+
+R = Reactor('test3.txt')
+assert R.get_on_count() == 2758514936282235
+
+R = Reactor('input.txt')
+assert R.get_on_count() == 1267133912086024
+print(R.get_on_count())
