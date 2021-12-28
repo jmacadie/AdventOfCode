@@ -1,5 +1,6 @@
 import time
-from typing import List, Tuple, Optional, Dict
+import heapq
+from typing import List, Tuple, Optional
 
 class State:
 
@@ -19,30 +20,42 @@ class State:
 
     EMPTY = '.'
 
-    def __init__(self, corridor: str, a_room: str, b_room: str, c_room: str, d_room: str) -> None:
+    def __init__(self, corridor: str, rooms: List[str]) -> None:
         self.corridor = list(corridor)
-        self.a_room = list(a_room)
-        self.b_room = list(b_room)
-        self.c_room = list(c_room)
-        self.d_room = list(d_room)
+        self.a_room = list(rooms[0])
+        self.b_room = list(rooms[1])
+        self.c_room = list(rooms[2])
+        self.d_room = list(rooms[3])
+        self.depth = len(rooms[0])
 
-    def get_all_moves(self) -> List[Tuple['State', int]]:
-        output = []
+    def __eq__(self, __o: object) -> bool:
+        if not isinstance(__o, State):
+            return NotImplemented
+        return self.to_s() == __o.to_s()
+
+    def __lt__(self, __o: object) -> bool:
+        if not isinstance(__o, State):
+            return NotImplemented
+        return self.to_s() < __o.to_s()
+
+    def get_all_moves(self) -> List[Tuple[int, 'State']]:
+        output = [] # type: List[Tuple[int, 'State']]
         for i, val in enumerate(self.corridor):
             if val != self.EMPTY:
-                room_move = self.get_to_room_move(i, val)
+                room_move = self.__get_to_room_move(i, val)
                 if room_move is not None:
                     output.append(room_move)
+        for room_val in self.ROOM_LOCATIONS:
+            room_move = self.__get_room_to_room_move(room_val)
+            if room_move is not None:
+                output.append(room_move)
         if not output:
-            for i, val in enumerate(self.corridor):
-                if val != self.EMPTY:
-                    output += self.get_corridor_moves(i, val, 0, 'NA', [])
             for room_val in self.ROOM_LOCATIONS:
-                output += self.get_from_room_moves(room_val)
+                output += self.__get_from_room_moves(room_val)
         return output
 
     @staticmethod
-    def return_state(
+    def __return_state(
         corridor: List[str],
         a_room: List[str],
         b_room: List[str],
@@ -51,39 +64,62 @@ class State:
         ) -> 'State':
         return State(
             ''.join(corridor),
-            ''.join(a_room),
+            [''.join(a_room),
             ''.join(b_room),
             ''.join(c_room),
-            ''.join(d_room),
+            ''.join(d_room)],
         )
 
-    def return_updated_state(self, corridor: List[str], room_val: str, room: List[str]) -> 'State':
-        new_a = room if room_val == 'A' else self.a_room.copy()
-        new_b = room if room_val == 'B' else self.b_room.copy()
-        new_c = room if room_val == 'C' else self.c_room.copy()
-        new_d = room if room_val == 'D' else self.d_room.copy()
-        return self.return_state(corridor, new_a, new_b, new_c, new_d)
+    def __return_updated_state(
+        self, corridor: List[str],
+        room_val: str, room: List[str],
+        room_val2: str, room2: List[str]) -> 'State':
+        if room_val == 'A':
+            new_a = room
+        elif room_val2 == 'A':
+            new_a = room2
+        else:
+            new_a = self.a_room.copy()
+        if room_val == 'B':
+            new_b = room
+        elif room_val2 == 'B':
+            new_b = room2
+        else:
+            new_b = self.b_room.copy()
+        if room_val == 'C':
+            new_c = room
+        elif room_val2 == 'C':
+            new_c = room2
+        else:
+            new_c = self.c_room.copy()
+        if room_val == 'D':
+            new_d = room
+        elif room_val2 == 'D':
+            new_d = room2
+        else:
+            new_d = self.d_room.copy()
+        return self.__return_state(corridor, new_a, new_b, new_c, new_d)
 
-    def get_move_cost(self, moves: int, val: str) -> int:
+    def __get_move_cost(self, moves: int, val: str) -> int:
         return moves * self.MOVE_COST[val]
 
-    def get_corridor_moves(
+    def __get_corridor_moves(
         self, posn: int, val: str,
         start_moves: int, room_val: str, room: List[str]
-        ) -> List[Tuple['State', int]]:
-        output = self.get_1_corridor_moves(
+        ) -> List[Tuple[int, 'State']]:
+        output = self.__get_1_corridor_moves(
             posn, val, range(posn-1, -1, -1),
             start_moves, room_val, room)
-        output += self.get_1_corridor_moves(
+        output += self.__get_1_corridor_moves(
             posn, val, range(posn+1, 11),
             start_moves, room_val, room)
         return output
 
-    def get_1_corridor_moves(
+    def __get_1_corridor_moves(
         self, posn: int, val: str, locs: range,
         start_moves: int, room_val: str, room: List[str]
-        ) -> List[Tuple['State', int]]:
-        output = [] # type: List[Tuple['State', int]]
+        ) -> List[Tuple[int, 'State']]:
+        output = [] # type: List[Tuple[int, 'State']]
         for new_posn in locs:
             if self.corridor[new_posn] != self.EMPTY:
                 break
@@ -92,13 +128,13 @@ class State:
             new_corridor = self.corridor.copy()
             new_corridor[new_posn] = val
             new_corridor[posn] = self.EMPTY
-            new_state = self.return_updated_state(new_corridor, room_val, room.copy())
+            new_state = self.__return_updated_state(new_corridor, room_val, room.copy(), 'NA', [])
             moves = start_moves + abs(new_posn - posn)
-            cost = self.get_move_cost(moves, val)
-            output.append((new_state, cost))
+            cost = self.__get_move_cost(moves, val)
+            output.append((cost, new_state))
         return output
 
-    def get_room(self, val: str) -> List[str]:
+    def __get_room(self, val: str) -> List[str]:
         if val == 'A':
             room = self.a_room.copy()
         elif val =='B':
@@ -109,14 +145,14 @@ class State:
             room = self.d_room.copy()
         return room
 
-    def room_available(self, val: str) -> bool:
-        room = self.get_room(val)
+    def __room_available(self, val: str) -> bool:
+        room = self.__get_room(val)
         for char in room:
             if char not in (val, self.EMPTY):
                 return False
         return True
 
-    def get_next_space(self, room: List[str]) -> Optional[int]:
+    def __get_next_space(self, room: List[str]) -> Optional[int]:
         for posn, val in enumerate(room):
             if posn == 0 and val != self.EMPTY:
                 return None
@@ -125,16 +161,16 @@ class State:
                     return posn
         return None
 
-    def get_first_val(self, room: List[str]) -> Optional[int]:
-        space = self.get_next_space(room)
+    def __get_first_val(self, room: List[str]) -> Optional[int]:
+        space = self.__get_next_space(room)
         if space is None:
             return 0
         if space == len(room) - 1:
             return None
         return space + 1
 
-    def get_to_room_move(self, posn: int, val: str) -> Optional[Tuple['State', int]]:
-        if not self.room_available(val):
+    def __get_to_room_move(self, posn: int, val: str) -> Optional[Tuple[int, 'State']]:
+        if not self.__room_available(val):
             return None
         target_posn = self.ROOM_LOCATIONS[val]
         if target_posn < posn:
@@ -144,28 +180,60 @@ class State:
         for new_posn in locs:
             if self.corridor[new_posn] != self.EMPTY:
                 return None
-        room = self.get_room(val)
-        room_posn = self.get_next_space(room)
+        room = self.__get_room(val)
+        room_posn = self.__get_next_space(room)
         if room_posn is None:
             return None
         new_corridor = self.corridor.copy()
         new_corridor[posn] = self.EMPTY
         room[room_posn] = val
-        new_state = self.return_updated_state(new_corridor, val, room)
+        new_state = self.__return_updated_state(new_corridor, val, room, 'NA', [])
         moves = abs(target_posn - posn) + room_posn + 1
-        cost = self.get_move_cost(moves, val)
-        return new_state, cost
+        cost = self.__get_move_cost(moves, val)
+        return cost, new_state
 
-    def get_from_room_moves(self, room_val: str) -> List[Tuple['State', int]]:
-        if self.room_available(room_val):
+    def __get_room_to_room_move(self, room_val: str) -> Optional[Tuple[int, 'State']]:
+        if self.__room_available(room_val):
+            return None
+        room = self.__get_room(room_val)
+        room_posn = self.__get_first_val(room)
+        if room_posn is None:
+            return None
+        val = room[room_posn]
+        if val == room_val:
+            return None
+        if not self.__room_available(val):
+            return None
+        posn = self.ROOM_LOCATIONS[room_val]
+        target_posn = self.ROOM_LOCATIONS[val]
+        if target_posn < posn:
+            locs = range(posn, target_posn-1, -1)
+        else:
+            locs = range(posn, target_posn+1)
+        for new_posn in locs:
+            if self.corridor[new_posn] != self.EMPTY:
+                return None
+        new_room = self.__get_room(val)
+        new_room_posn = self.__get_next_space(new_room)
+        if new_room_posn is None:
+            return None
+        room[room_posn] = self.EMPTY
+        new_room[new_room_posn] = val
+        state = self.__return_updated_state(self.corridor.copy(), room_val, room, val, new_room)
+        moves = room_posn + 1 + abs(posn - target_posn) + new_room_posn + 1
+        cost = self.__get_move_cost(moves, val)
+        return cost, state
+
+    def __get_from_room_moves(self, room_val: str) -> List[Tuple[int, 'State']]:
+        if self.__room_available(room_val):
             return []
-        room = self.get_room(room_val)
-        room_posn = self.get_first_val(room)
+        room = self.__get_room(room_val)
+        room_posn = self.__get_first_val(room)
         if room_posn is None:
             return []
         val = room[room_posn]
         room[room_posn] = self.EMPTY
-        return self.get_corridor_moves(
+        return self.__get_corridor_moves(
             self.ROOM_LOCATIONS[room_val], val, room_posn+1, room_val, room)
 
     def to_s(self) -> str:
@@ -176,14 +244,95 @@ class State:
         output += ''.join(self.d_room)
         return output
 
+    def pretty_print(self) -> None:
+        print('#############')
+        line = '#' + ''.join(self.corridor) + '#'
+        print(line)
+        first = True
+        for a, b, c, d in zip(self.a_room, self.b_room, self.c_room, self.d_room):
+            line = '  #' + a + '#' + b + '#' + c + '#' + d + '#  '
+            if first:
+                line = line.replace(' ', '#')
+                first = False
+            print(line)
+        print('  #########  ')
+
+    def distance_to_solved(self) -> int:
+        output = self.__distance_corridor()
+        output += self.__distance_blocked_corridor()
+        for room_val in self.ROOM_LOCATIONS:
+            output += self.__distance_room(room_val)
+        output -= self.__distance_space_room()
+        return output
+
+    def __distance_corridor(self) -> int:
+        output = 0
+        for i, val in enumerate(self.corridor):
+            if val != self.EMPTY:
+                moves = abs(i - self.ROOM_LOCATIONS[val]) + self.depth
+                output += self.__get_move_cost(moves, val)
+        return output
+
+    def __distance_blocked_corridor(self) -> int:
+        output = 0
+        for pos1, val1 in enumerate(self.corridor):
+            if val1 != self.EMPTY:
+                target1 = self.ROOM_LOCATIONS[val1]
+                for pos2 in range(pos1+1, len(self.corridor)):
+                    val2 = self.corridor[pos2]
+                    if val2 != self.EMPTY:
+                        target2 = self.ROOM_LOCATIONS[val2]
+                        if pos1 > target2 and pos2 < target1:
+                            moves = (9 - pos2) * 2
+                            output += self.__get_move_cost(moves, val2)
+        return output
+
+    def __distance_room(self, room_val: str) -> int:
+        output = 0
+        room = self.__get_room(room_val)
+        for i, val in enumerate(room):
+            if val == self.EMPTY:
+                continue
+            if val == room_val:
+                if self.__room_available(room_val):
+                    moves = self.depth - 1 - i
+                else:
+                    moves = self.depth + i + 3
+            else:
+                moves = (i + 1)
+                moves += abs(self.ROOM_LOCATIONS[val] - self.ROOM_LOCATIONS[room_val])
+                moves += self.depth
+            output += self.__get_move_cost(moves, val)
+        return output
+
+    def __distance_space_room(self) -> int:
+        output = 0
+        triangle_depth = int(self.depth * (self.depth - 1) / 2)
+        for room_val in self.ROOM_LOCATIONS:
+            output += self.__get_move_cost(triangle_depth, room_val)
+        return output
+
 class Hallway:
 
-    def __init__(self, file_path: str) -> None:
-        self.states = {} # type: Dict[str, int]
-        self.read_file(file_path)
-        self.add_or_update(self.initial_state.to_s(), 0)
+    def __init__(self, file_path: str, add_extra: bool) -> None:
+        corridor, room_a, room_b, room_c, room_d = self.__read_file(file_path)
+        if add_extra:
+            room_a = room_a[0] + 'DD' + room_a[1]
+            room_b = room_b[0] + 'CB' + room_b[1]
+            room_c = room_c[0] + 'BA' + room_c[1]
+            room_d = room_d[0] + 'AC' + room_d[1]
+        self.initial_state = State(corridor, [room_a, room_b, room_c, room_d])
+        self.frontier = [] # type: List[Tuple[int, int, State, int]]
+        heapq.heapify(self.frontier)
+        self.visited = [] # type: List[str]
+        self.target = '...........'
+        self.target += ''.join(['A' for _ in range(len(room_a))])
+        self.target += ''.join(['B' for _ in range(len(room_a))])
+        self.target += ''.join(['C' for _ in range(len(room_a))])
+        self.target += ''.join(['D' for _ in range(len(room_a))])
 
-    def read_file(self, file_path: str) -> None:
+    @staticmethod
+    def __read_file(file_path: str) -> Tuple[str, str, str, str, str]:
         first_line = True
         room_a = ''
         room_b = ''
@@ -201,36 +350,45 @@ class Hallway:
                         room_b += line[1]
                         room_c += line[2]
                         room_d += line[3]
-        self.initial_state = State(corridor, room_a, room_b, room_c, room_d)
+        return (corridor, room_a, room_b, room_c, room_d)
 
-    def add_or_update(self, state: str, cost: int) -> bool:
-        if state not in self.states:
-            self.states[state] = cost
-            return True
-        if self.states[state] > cost:
-            self.states[state] = cost
-            return True
-        return False
-
-    def find_min_states(self) -> None:
-        self.find_min_states_int(self.initial_state, 0, 0.0, 1.0)
-
-    def find_min_states_int(self, state: State, curr_cost: int, pcnt_from: float, pcnt_to: float) -> None:
-        moves = state.get_all_moves()
-        pcnt_inc = (pcnt_to - pcnt_from)/max(len(moves), 1)
-        pcnt = pcnt_from
-        for move in moves:
-            new_state, cost = move
-            cost += curr_cost
-            if self.add_or_update(new_state.to_s(), cost):
-                print(f'{new_state.to_s()} - {round(pcnt * 100, 0)} % done')
-                self.find_min_states_int(new_state, cost, pcnt, pcnt+pcnt_inc)
-            pcnt += pcnt_inc
+    def find_min_distance(self) -> int:
+        state = self.initial_state
+        states = [] # type: List[Tuple[int, State, int, int]]
+        self.visited.append(state.to_s())
+        cost = 0
+        counter = 0
+        while state.to_s() != self.target:
+            moves = state.get_all_moves()
+            for move in moves:
+                new_cost, new_state = move
+                new_state_s = new_state.to_s()
+                if new_state_s not in self.visited:
+                    self.visited.append(new_state_s)
+                    new_cost += cost
+                    heuristic = new_cost + new_state.distance_to_solved()
+                    heapq.heappush(self.frontier, (heuristic, new_cost, new_state, counter))
+            _, cost, state, from_iter = heapq.heappop(self.frontier)
+            counter += 1
+            states.append((counter, state, cost, from_iter))
+        last_iter = counter
+        solve_path = [] # type: List[Tuple[State, int]]
+        while states:
+            counter, state, cost, from_iter = states.pop()
+            if counter == last_iter:
+                solve_path.append((state, cost))
+                last_iter = from_iter
+        last_cost = 0
+        while solve_path:
+            state, cost = solve_path.pop()
+            state.pretty_print()
+            print(f'cost: {cost} ({cost - last_cost})\n')
+            last_cost = cost
+        return cost
 
 start = time.time()
 
-H = Hallway('input.txt')
-H.find_min_states()
-print(H.states['...........AABBCCDD'])
+H = Hallway('input.txt', True)
+print(H.find_min_distance())
 
 print(f'--- {round(time.time() - start, 2)} seconds ---')
