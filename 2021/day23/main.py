@@ -283,8 +283,9 @@ class State:
                     if val2 != self.EMPTY:
                         target2 = self.ROOM_LOCATIONS[val2]
                         if pos1 > target2 and pos2 < target1:
-                            moves = (9 - pos2) * 2
-                            output += self.__get_move_cost(moves, val2)
+                            #moves = (9 - pos2) * 2
+                            #output += self.__get_move_cost(moves, val2)
+                            return 100000
         return output
 
     def __distance_room(self, room_val: str) -> int:
